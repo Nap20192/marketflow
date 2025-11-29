@@ -1,0 +1,189 @@
+{
+  "info": {
+    "name": "Market Data API",
+    "_postman_id": "d1c5b660-2c4f-11ee-be56-0242ac120002",
+    "description": "API for market data aggregated from PostgreSQL (average, min, max prices per pair). Includes system health and mode switching endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Prices",
+      "item": [
+        {
+          "name": "Get Latest Price (by Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/latest/:symbol",
+            "description": "Get the latest price for a given symbol."
+          }
+        },
+        {
+          "name": "Get Latest Price (by Exchange & Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/latest/:exchange/:symbol",
+            "description": "Get the latest price for a given symbol from a specific exchange."
+          }
+        },
+        {
+          "name": "Get Highest Price (by Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/highest/:symbol",
+            "description": "Get the highest price for a given symbol."
+          }
+        },
+        {
+          "name": "Get Highest Price (by Exchange & Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/highest/:exchange/:symbol",
+            "description": "Get the highest price for a given symbol from a specific exchange."
+          }
+        },
+        {
+          "name": "Get Highest Price (by Symbol & Period)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/highest/:symbol",
+            "description": "Get the highest price within a period (e.g., ?period=1m).",
+            "query": [
+              {
+                "key": "period",
+                "value": "1m"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Highest Price (by Exchange, Symbol & Period)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/highest/:exchange/:symbol",
+            "description": "Get the highest price from a specific exchange within a period.",
+            "query": [
+              {
+                "key": "period",
+                "value": "5m"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Lowest Price (by Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/lowest/:symbol",
+            "description": "Get the lowest price for a given symbol."
+          }
+        },
+        {
+          "name": "Get Lowest Price (by Exchange & Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/lowest/:exchange/:symbol",
+            "description": "Get the lowest price for a given symbol from a specific exchange."
+          }
+        },
+        {
+          "name": "Get Lowest Price (by Symbol & Period)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/lowest/:symbol",
+            "description": "Get the lowest price for a symbol in a period.",
+            "query": [
+              {
+                "key": "period",
+                "value": "10m"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Lowest Price (by Exchange, Symbol & Period)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/lowest/:exchange/:symbol",
+            "description": "Get the lowest price from a specific exchange in a period.",
+            "query": [
+              {
+                "key": "period",
+                "value": "30s"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Average Price (by Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/average/:symbol",
+            "description": "Get the average price for a given symbol."
+          }
+        },
+        {
+          "name": "Get Average Price (by Exchange & Symbol)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/average/:exchange/:symbol",
+            "description": "Get the average price for a given symbol from a specific exchange."
+          }
+        },
+        {
+          "name": "Get Average Price (by Exchange, Symbol & Period)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/prices/average/:exchange/:symbol",
+            "description": "Get the average price within a period from a specific exchange.",
+            "query": [
+              {
+                "key": "period",
+                "value": "3m"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mode API",
+      "item": [
+        {
+          "name": "Switch to Test Mode",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/mode/test",
+            "description": "Switch API to Test Mode (use generated data)."
+          }
+        },
+        {
+          "name": "Switch to Live Mode",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/mode/live",
+            "description": "Switch API to Live Mode (fetch real data)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "System Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health",
+            "description": "Check system status (connections, Redis, PostgreSQL, etc.)."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    }
+  ]
+}

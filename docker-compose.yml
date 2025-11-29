@@ -1,0 +1,71 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      EXCHANGE1_HOST: exchange1
+      EXCHANGE2_HOST: exchange2
+      EXCHANGE3_HOST: exchange3
+      REDIS_ADDR: redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      exchange1:
+        condition: service_started
+      exchange2:
+        condition: service_started
+      exchange3:
+        condition: service_started
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+  exchange1:
+    image: exchange1
+    container_name: exchange1
+    ports:
+      - "40101:40101"
+
+  exchange2:
+    image: exchange2
+    container_name: exchange2
+    ports:
+      - "40102:40102"
+
+  exchange3:
+    image: exchange3
+    container_name: exchange3
+    ports:
+      - "40103:40103"
+
+
+
+volumes:
+  db_data:

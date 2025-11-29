@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en"> <!-- was ru -->
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Market - BTC/DOGE/TON/SOL/ETH — exchanges exchange1/exchange2/exchange3</title>
+  <!-- New: better font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: "Inter Tight", Inter, Roboto, Arial, sans-serif; background:#000; color:#e6eef8; margin:0; padding:20px; }
+    .container { max-width:1100px; margin:0 auto; }
+    h1 { margin:0 0 12px 0; font-size:20px; }
+    .controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+    .btn { font-weight:500;       font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+        background:#0ea5a9; color:#062024; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; }
+    .btn.secondary { background:#2a2a2a; color:#e6eef8; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; font-size:13px; }
+    th, td { padding:8px 10px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.04); }
+    th { background: rgba(255,255,255,0.06); font-weight:600; color:#d9e6ef; }
+    tr.error td { color:#ffb4b4; }
+    .small { font-size:12px; color:#9fb3bf; }
+    .status { margin-left:8px; font-size:13px; color:#9fb3bf; }
+    .muted { color:#7b8a96; }
+    .ok { color:#8ef0b0; }
+    .bad { color:#ff9b9b; }
+    .placeholder { color:#7b8a96; font-style:italic; }
+    /* Use Fira Code for values and tabular data */
+    body{
+      font-family: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-variant-ligatures: contextual;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Live Market — updates live</h1>
+    <div class="controls">
+      <label class="small muted">API base:</label>
+      <input id="baseUrl" value="http://localhost:8080" style="padding:6px 8px; border-radius:6px; border:1px solid #222; background:#0a0a0a; color:#e6eef8; width:320px;" />
+      <button id="applyBtn" class="btn secondary">Apply</button>
+
+      <label style="margin-left:12px;" class="small muted">Mode:</label>
+      <select id="modeSelect" style="padding:6px; border-radius:6px; background:#0a0a0a; color:#e6eef8; border:1px solid #222;">
+        <option value="live">live (fetch API)</option>
+        <option value="mock">mock (generate data)</option>
+      </select>
+
+      <label style="margin-left:12px;" class="small muted">Data type:</label>
+      <select id="dataTypeSelect" style="padding:6px; border-radius:6px; background:#0a0a0a; color:#e6eef8; border:1px solid #222;">
+        <option value="latest">latest</option>
+        <option value="average">average</option>
+        <option value="highest">highest</option>
+        <option value="lowest">lowest</option>
+      </select>
+
+      <label style="margin-left:12px;" class="small muted">Period:</label>
+      <select id="periodSelect" style="padding:6px; border-radius:6px; background:#0a0a0a; color:#e6eef8; border:1px solid #222;">
+        <option value="1s">1s</option>
+        <option value="5s">5s</option>
+        <option value="15s">15s</option>
+        <option value="1m">1m</option>
+        <option value="5m">5m</option>
+        <option value="15m">15m</option>
+        <option value="1h">1h</option>
+        <option value="24h">24h</option>
+      </select>
+
+      <div class="status" id="lastUpdate">Last: —</div>
+      <div class="status" id="errors">Errors: 0</div>
+    </div>
+
+    <table id="pricesTable" aria-live="polite">
+      <thead>
+        <tr>
+          <th>Pair</th>
+          <th>Exchange</th>
+          <th>Price</th>
+          <th>Period</th>
+          <th>Timestamp</th>
+          <th class="small">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- rows will be injected -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // ====== Настройки ======
+    const symbols = ['BTCUSDT','DOGEUSDT','TONUSDT','SOLUSDT','ETHUSDT'];
+    const exchanges = ['exchange1','exchange2','exchange3','global']; // можно добавить 'global' при необходимости
+    let BASE_URL = document.getElementById('baseUrl').value.replace(/\/$/, '');
+    let MODE = document.getElementById('modeSelect').value; // 'live' or 'mock'
+    // NEW: data type and period
+    let DATA_TYPE = document.getElementById('dataTypeSelect').value; // 'latest' | 'average' | 'highest' | 'lowest'
+    let PERIOD = document.getElementById('periodSelect').value;       // '1m' | '5m' | '15m' | '1h' | '24h'
+    const POLL_MS = 800; // 0.1 second
+    // =======================
+
+    const tbody = document.querySelector('#pricesTable tbody');
+    const lastUpdateEl = document.getElementById('lastUpdate');
+    const errorsEl = document.getElementById('errors');
+    let errorCount = 0;
+
+    // build initial rows
+    const rows = {}; // key -> tr
+    for (const s of symbols) {
+      for (const ex of exchanges) {
+        const key = `${s}::${ex}`;
+        const tr = document.createElement('tr');
+        tr.id = 'row-' + key;
+        tr.innerHTML = `
+          <td class="pair">${s}</td>
+          <td class="exchange">${ex}</td>
+          <td class="price placeholder">—</td>
+          <td class="period muted">—</td>
+          <td class="ts muted">—</td>
+          <td class="status muted small">idle</td>
+        `;
+        tbody.appendChild(tr);
+        rows[key] = tr;
+      }
+    }
+
+    document.getElementById('applyBtn').addEventListener('click', () => {
+      BASE_URL = document.getElementById('baseUrl').value.replace(/\/$/, '');
+      MODE = document.getElementById('modeSelect').value;
+      // NEW: update data type + period
+      DATA_TYPE = document.getElementById('dataTypeSelect').value;
+      PERIOD = document.getElementById('periodSelect').value;
+      // reset counts
+      errorCount = 0;
+      errorsEl.textContent = 'Errors: 0';
+    });
+
+    // helper: timeout fetch
+    async function fetchWithTimeout(resource, options = {}) {
+      const { timeout = 3000 } = options;
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      try {
+        const res = await fetch(resource, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return res;
+      } catch (e) {
+        clearTimeout(id);
+        throw e;
+      }
+    }
+
+    // NEW: period string helper
+    function periodString(p) {
+      return String(p || '').trim() || '1m';
+    }
+
+    // mock data generator
+    function mockResponse(symbol, exchange) {
+      // base price rough estimates per pair for plausibility:
+      const base = {
+        'BTCUSDT': 60000,
+        'ETHUSDT': 4000,
+        'SOLUSDT': 100,
+        'TONUSDT': 3,
+        'DOGEUSDT': 0.15
+      }[symbol] || 100;
+      const noise = (Math.random() - 0.5) * base * 0.01;
+      const avg = +(base + noise).toFixed(6);
+      const min = +(avg - Math.abs(noise) * (0.4 + Math.random()*0.6)).toFixed(6);
+      const max = +(avg + Math.abs(noise) * (0.4 + Math.random()*0.6)).toFixed(6);
+      return {
+        pair_name: symbol,
+        exchange: String(exchange),
+        timestamp: new Date().toISOString(),
+        // ensure all fields exist for different DATA_TYPEs
+        price: Number(avg),
+        average_price: Number(avg),
+        min_price: Number(min),
+        max_price: Number(max)
+      };
+    }
+
+    // parse single API response (assumes JSON body with the specified fields)
+    function parseApiJson(json) {
+      // If your API structure differs, adapt here.
+      // Expecting: { pair_name, exchange, timestamp, average_price, min_price, max_price }
+      if (!json) return null;
+      // defensive access:
+      const pair = json.pair_name || json.pair || json.symbol;
+      const exchange = json.exchange || json.exch || json.source;
+      const timestamp = json.timestamp || json.ts || json.time;
+      const average_price = json.average_price != null ? json.average_price : json.avg;
+      const min_price = json.min_price != null ? json.min_price : json.min;
+      const max_price = json.max_price != null ? json.max_price : json.max;
+      return { pair_name: pair, exchange, timestamp, average_price, min_price, max_price };
+    }
+
+    // REPLACED: pollOnce now supports DATA_TYPE and PERIOD
+    async function pollOnce() {
+      const tasks = [];
+      for (const s of symbols) {
+        for (const ex of exchanges) {
+          const key = `${s}::${ex}`;
+          if (MODE === 'mock') {
+            const data = mockResponse(s, ex);
+            updateRow(key, data, true, 'mock');
+            continue;
+          }
+
+          let url;
+          if (ex === 'global') {
+            url = `${BASE_URL}/prices/${encodeURIComponent(DATA_TYPE)}/${encodeURIComponent(s)}`;
+          } else {
+            url = `${BASE_URL}/prices/${encodeURIComponent(DATA_TYPE)}/${encodeURIComponent(ex)}/${encodeURIComponent(s)}`;
+          }
+          if (DATA_TYPE !== 'latest') {
+            const q = periodString(PERIOD);
+            url += `?period=${encodeURIComponent(q)}`;
+          }
+
+          const p = fetchWithTimeout(url, { timeout: 2500 })
+            .then(async res => {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              const json = await res.json();
+              updateRow(key, json, true, 'ok');
+            })
+            .catch(err => {
+              errorCount++;
+              errorsEl.textContent = 'Errors: ' + errorCount;
+              console.warn('fetch error', url, err);
+              updateRow(key, null, false, 'err');
+            });
+          tasks.push(p);
+        }
+      }
+      await Promise.allSettled(tasks);
+      lastUpdateEl.textContent = 'Last: ' + new Date().toLocaleTimeString();
+    }
+
+    // REPLACED: updateRow uses a single Price + Period
+    function updateRow(key, data, ok=true, msg='ok') {
+      const tr = rows[key];
+      if (!tr) return;
+      if (!data || !ok) {
+        tr.classList.add('error');
+        tr.querySelector('.price').textContent = '—';
+        tr.querySelector('.period').textContent = '—';
+        tr.querySelector('.ts').textContent = '—';
+        tr.querySelector('.status').textContent = msg || 'error';
+        tr.querySelectorAll('td').forEach(td => td.classList.remove('placeholder'));
+        return;
+      }
+      tr.classList.remove('error');
+
+      let displayPrice;
+      if (DATA_TYPE === 'latest') displayPrice = data.price ?? data.last_price ?? data.latest;
+      if (DATA_TYPE === 'average') displayPrice = data.average_price ?? data.avg;
+      if (DATA_TYPE === 'highest') displayPrice = data.max_price ?? data.high ?? data.max;
+      if (DATA_TYPE === 'lowest') displayPrice = data.min_price ?? data.low ?? data.min;
+
+      tr.querySelector('.price').textContent = Number(displayPrice ?? 0).toLocaleString(undefined, { maximumFractionDigits: 8 });
+      tr.querySelector('.period').textContent = (DATA_TYPE === 'latest') ? '—' : periodString(PERIOD);
+      const ts = data.timestamp ? new Date(data.timestamp) : new Date();
+      tr.querySelector('.ts').textContent = ts.toLocaleTimeString();
+      tr.querySelector('.status').textContent = msg || 'ok';
+      tr.querySelectorAll('td').forEach(td => td.classList.remove('placeholder'));
+    }
+
+    // start polling
+    let intervalId = null;
+    function startPolling() {
+      if (intervalId) clearInterval(intervalId);
+      // run immediately once, then start interval
+      pollOnce();
+      intervalId = setInterval(pollOnce, POLL_MS);
+    }
+
+    // start automatically
+    startPolling();
+
+    // stop when page hidden to save resources (but will resume on visible)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = null;
+      } else {
+        startPolling();
+      }
+    });
+  </script>
+</body>
+</html>
