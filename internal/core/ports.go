@@ -13,7 +13,7 @@ type Repository interface {
 	GetMax(ctx context.Context, arg storage.Params) (float64, error)
 	GetMin(ctx context.Context, arg storage.Params) (float64, error)
 	GetLatest(ctx context.Context, exchange string, symbol string) (float64, error)
-	InsertMarket(ctx context.Context, arg storage.InsertMarketParams) (model.AgregetedData, error)
+	InsertMarket(ctx context.Context, arg storage.InsertMarketParams) (model.AggregatedData, error)
 }
 
 type Cache interface {

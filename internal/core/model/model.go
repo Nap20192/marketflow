@@ -6,7 +6,7 @@ import (
 
 const TimeOfAverage = 1 * time.Minute
 
-type AgregetedData struct {
+type AggregatedData struct {
 	ID           int64
 	PairName     string
 	Exchange     string

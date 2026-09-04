@@ -20,7 +20,7 @@ func NewTradeHandler(cache core.Cache) *TradeHandler {
 	}
 }
 
-func (th *TradeHandler) Handle(q int, task conc.Task, result chan<- conc.Result) {
+func (th *TradeHandler) Handle(workerID int, task conc.Task, result chan<- conc.Result) {
 	var data model.Trade
 
 	err := json.Unmarshal([]byte(task.Data), &data)

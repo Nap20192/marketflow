@@ -148,12 +148,12 @@ func (a *App) Run(ctx context.Context) error {
 	})
 
 	g.Go(func() error {
-		for i := range a.poolClients.Results() {
-			if i.Err != nil {
-				slog.Error("pool client error", "name", i.Name, "error", i.Err)
+		for res := range a.poolClients.Results() {
+			if res.Err != nil {
+				slog.Error("pool client error", "name", res.Name, "error", res.Err)
 				continue
 			}
-			slog.Info("pool client finished", "name", i.Name)
+			slog.Info("pool client finished", "name", res.Name)
 		}
 		return nil
 	})
@@ -267,7 +267,7 @@ func (a *App) initPostgres() error {
 
 func (a *App) handleTasks(id int, numOfWorkers int, taskChan chan conc.Task, resultChan chan conc.Result) {
 	a.workerWg.Add(1)
-	go func(index int, numOfWorkers int, c chan conc.Task, Result chan conc.Result) {
+	go func(index int, numOfWorkers int, tasks chan conc.Task, results chan conc.Result) {
 		defer a.workerWg.Done()
 		indexStr := strconv.Itoa(index + 1)
 		workers := conc.CreateNWorkers(numOfWorkers, conc.WithName("worker-"+indexStr))
@@ -276,12 +276,12 @@ func (a *App) handleTasks(id int, numOfWorkers int, taskChan chan conc.Task, res
 		pool.Name = "pool-" + indexStr
 
 		pool.Create()
-		for t := range c {
-			pool.Work(t, resultChan)
+		for task := range tasks {
+			pool.Work(task, results)
 		}
 		pool.Wait()
 		pool.PrintStats()
-		close(resultChan)
+		close(results)
 	}(id, numOfWorkers, taskChan, resultChan)
 }
 

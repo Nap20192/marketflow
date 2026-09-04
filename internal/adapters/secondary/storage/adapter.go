@@ -87,42 +87,42 @@ func (s *StorageAdapter) GetLatest(ctx context.Context, exchange string, symbol 
 	return data, nil
 }
 
-func (s *StorageAdapter) InsertMarket(ctx context.Context, arg InsertMarketParams) (model.AgregetedData, error) {
+func (s *StorageAdapter) InsertMarket(ctx context.Context, arg InsertMarketParams) (model.AggregatedData, error) {
 	return s.repository.InsertMarket(ctx, arg)
 }
 
-func (s *StorageAdapter) getFromCache(ctx context.Context, exchanger string, symbol string, interval time.Duration) (model.AgregetedData, error) {
+func (s *StorageAdapter) getFromCache(ctx context.Context, exchanger string, symbol string, interval time.Duration) (model.AggregatedData, error) {
 	data, err := s.cache.GetRawData(ctx, exchanger, symbol, interval)
 	if err != nil {
 		data, err = s.fallback.GetRawData(ctx, exchanger, symbol, interval)
 		if err != nil {
-			return model.AgregetedData{}, err
+			return model.AggregatedData{}, err
 		}
 	}
 
 	if len(data) == 0 {
-		return model.AgregetedData{}, ErrNoData
+		return model.AggregatedData{}, ErrNoData
 	}
 
 	var sum float64
-	min := data[0].Price
-	max := data[0].Price
+	minPrice := data[0].Price
+	maxPrice := data[0].Price
 	for _, trade := range data {
 		sum += trade.Price
-		if trade.Price < min {
-			min = trade.Price
+		if trade.Price < minPrice {
+			minPrice = trade.Price
 		}
-		if trade.Price > max {
-			max = trade.Price
+		if trade.Price > maxPrice {
+			maxPrice = trade.Price
 		}
 	}
 	avg := sum / float64(len(data))
 
-	return model.AgregetedData{
+	return model.AggregatedData{
 		PairName:     symbol,
 		Exchange:     exchanger,
 		AveragePrice: avg,
-		MinPrice:     min,
-		MaxPrice:     max,
+		MinPrice:     minPrice,
+		MaxPrice:     maxPrice,
 	}, nil
 }

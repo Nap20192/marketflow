@@ -9,18 +9,18 @@ type contextKey struct{}
 var ctxLoggerKey = contextKey{}
 
 type logCtx struct {
-	sessionId string
+	sessionID string
 	name      string
 }
 
-func WithSessionId(ctx context.Context, sessionId string) context.Context {
+func WithSessionID(ctx context.Context, sessionID string) context.Context {
 	if c, ok := ctx.Value(ctxLoggerKey).(logCtx); ok {
-		c.sessionId = sessionId
+		c.sessionID = sessionID
 		return context.WithValue(ctx, ctxLoggerKey, c)
 	}
 
 	return context.WithValue(ctx, ctxLoggerKey, logCtx{
-		sessionId: sessionId,
+		sessionID: sessionID,
 	})
 }
 

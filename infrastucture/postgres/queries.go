@@ -23,19 +23,19 @@ WHERE
 func (q *Queries) GetAverage(ctx context.Context, arg storage.Params) (float64, error) {
 	seconds := int64(arg.Interval.Seconds())
 	row := q.db.QueryRow(ctx, getAverage, arg.PairName, arg.Exchange, seconds)
-	var avg_price sql.NullFloat64
-	err := row.Scan(&avg_price)
+	var avgPrice sql.NullFloat64
+	err := row.Scan(&avgPrice)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, ErrNoRows
 		}
 		return 0, err
 	}
-	if !avg_price.Valid {
+	if !avgPrice.Valid {
 		return 0, ErrNoRows
 	}
 
-	return avg_price.Float64, nil
+	return avgPrice.Float64, nil
 }
 
 const getMax = `
@@ -50,19 +50,19 @@ WHERE
 func (q *Queries) GetMax(ctx context.Context, arg storage.Params) (float64, error) {
 	seconds := int64(arg.Interval.Seconds())
 	row := q.db.QueryRow(ctx, getMax, arg.PairName, arg.Exchange, seconds)
-	var max_price sql.NullFloat64
-	err := row.Scan(&max_price)
+	var maxPrice sql.NullFloat64
+	err := row.Scan(&maxPrice)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, ErrNoRows
 		}
 		return 0, err
 	}
-	if !max_price.Valid {
+	if !maxPrice.Valid {
 		return 0, ErrNoRows
 	}
 
-	return max_price.Float64, nil
+	return maxPrice.Float64, nil
 }
 
 const getMin = `
@@ -77,19 +77,19 @@ WHERE
 func (q *Queries) GetMin(ctx context.Context, arg storage.Params) (float64, error) {
 	seconds := int64(arg.Interval.Seconds())
 	row := q.db.QueryRow(ctx, getMin, arg.PairName, arg.Exchange, seconds)
-	var min_price sql.NullFloat64
-	err := row.Scan(&min_price)
+	var minPrice sql.NullFloat64
+	err := row.Scan(&minPrice)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, ErrNoRows
 		}
 		return 0, err
 	}
-	if !min_price.Valid {
+	if !minPrice.Valid {
 		return 0, ErrNoRows
 	}
 
-	return min_price.Float64, nil
+	return minPrice.Float64, nil
 }
 
 const insertMarket = `
@@ -106,7 +106,7 @@ RETURNING
     id, pair_name, exchange, timestamp, average_price, min_price, max_price
 `
 
-func (q *Queries) InsertMarket(ctx context.Context, arg storage.InsertMarketParams) (model.AgregetedData, error) {
+func (q *Queries) InsertMarket(ctx context.Context, arg storage.InsertMarketParams) (model.AggregatedData, error) {
 	row := q.db.QueryRow(ctx, insertMarket,
 		arg.PairName,
 		arg.Exchange,
@@ -114,16 +114,16 @@ func (q *Queries) InsertMarket(ctx context.Context, arg storage.InsertMarketPara
 		arg.MinPrice,
 		arg.MaxPrice,
 	)
-	var i model.AgregetedData
+	var data model.AggregatedData
 
 	err := row.Scan(
-		&i.ID,
-		&i.PairName,
-		&i.Exchange,
-		&i.Timestamp,
-		&i.AveragePrice,
-		&i.MinPrice,
-		&i.MaxPrice,
+		&data.ID,
+		&data.PairName,
+		&data.Exchange,
+		&data.Timestamp,
+		&data.AveragePrice,
+		&data.MinPrice,
+		&data.MaxPrice,
 	)
-	return i, err
+	return data, err
 }

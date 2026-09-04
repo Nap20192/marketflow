@@ -59,13 +59,13 @@ func FanIn(ctx context.Context, out chan Task, channels []chan Result) {
 }
 
 func makeToTask(result Result) (Task, error) {
-	d := model.Trade{
+	trade := model.Trade{
 		Symbol:    result.Symbol,
 		Price:     result.Price,
 		Timestamp: result.Timestamp,
 	}
 
-	data, err := json.Marshal(d)
+	data, err := json.Marshal(trade)
 	if err != nil {
 		return Task{}, err
 	}

@@ -22,8 +22,8 @@ func (h *HandlerMiddleware) Enabled(ctx context.Context, rec slog.Level) bool {
 
 func (h *HandlerMiddleware) Handle(ctx context.Context, rec slog.Record) error {
 	if c, ok := ctx.Value(ctxLoggerKey).(logCtx); ok {
-		if c.sessionId != "" {
-			rec.Add(slog.String("session_id", fmt.Sprintf("%.4s", c.sessionId)))
+		if c.sessionID != "" {
+			rec.Add(slog.String("session_id", fmt.Sprintf("%.4s", c.sessionID)))
 		}
 		if c.name != "" {
 			rec.Add(slog.String("name", c.name))

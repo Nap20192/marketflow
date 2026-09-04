@@ -8,23 +8,23 @@ import (
 func FanOut(ctx context.Context, src <-chan Task, dests ...chan Task) {
 	var wg sync.WaitGroup
 
-	for s := range src {
-		for _, d := range dests {
+	for task := range src {
+		for _, dest := range dests {
 			wg.Add(1)
-			go func(val Task, dest chan Task) {
+			go func(task Task, dest chan Task) {
 				defer wg.Done()
 				select {
 				case <-ctx.Done():
 					return
-				case dest <- val:
+				case dest <- task:
 				default:
 				}
-			}(s, d)
+			}(task, dest)
 		}
 	}
 
 	wg.Wait()
-	for _, d := range dests {
-		close(d)
+	for _, dest := range dests {
+		close(dest)
 	}
 }

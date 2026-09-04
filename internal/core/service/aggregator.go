@@ -83,16 +83,15 @@ func (a *Aggregator) aggregate(ctx context.Context, interval time.Duration) erro
 				}
 
 				var sum float64
-				var min, max float64
-				min = rawData[0].Price
-				max = rawData[0].Price
+				minPrice := rawData[0].Price
+				maxPrice := rawData[0].Price
 				for _, data := range rawData {
 					sum += data.Price
-					if data.Price < min {
-						min = data.Price
+					if data.Price < minPrice {
+						minPrice = data.Price
 					}
-					if data.Price > max {
-						max = data.Price
+					if data.Price > maxPrice {
+						maxPrice = data.Price
 					}
 				}
 				average := sum / float64(len(rawData))
@@ -100,8 +99,8 @@ func (a *Aggregator) aggregate(ctx context.Context, interval time.Duration) erro
 					PairName:     symbol,
 					Exchange:     exchanger,
 					AveragePrice: average,
-					MinPrice:     min,
-					MaxPrice:     max,
+					MinPrice:     minPrice,
+					MaxPrice:     maxPrice,
 				})
 				if err != nil {
 					mu.Lock()

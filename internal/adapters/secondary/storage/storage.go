@@ -25,5 +25,5 @@ type DBRepository interface {
 	GetAverage(ctx context.Context, arg Params) (float64, error)
 	GetMax(ctx context.Context, arg Params) (float64, error)
 	GetMin(ctx context.Context, arg Params) (float64, error)
-	InsertMarket(ctx context.Context, arg InsertMarketParams) (model.AgregetedData, error)
+	InsertMarket(ctx context.Context, arg InsertMarketParams) (model.AggregatedData, error)
 }
