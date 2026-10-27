@@ -1,5 +1,9 @@
 # MarketFlow
 
+MarketFlow is a modular, production-oriented service for collecting, aggregating, caching, and storing market data. Built in Go with PostgreSQL and Redis, it follows clean-architecture principles and idiomatic Go concurrency patterns so the codebase is easy to extend and operate.
+
+This README is a short, practical guide to help you get the project running locally, understand the repo layout, and contribute.
+
 ## Local configuration
 
 Before starting the application, copy the example configuration:
@@ -9,11 +13,6 @@ cp .env.example .env
 ```
 
 Set local values in `.env`. This file is ignored by Git. Use separate credentials for deployed environments.
-
-
-MarketFlow is a modular, production-oriented service for collecting, aggregating, caching, and storing market data. Built in Go with PostgreSQL and Redis, it follows clean-architecture principles and idiomatic Go concurrency patterns so the codebase is easy to extend and operate.
-
-This README is a short, practical guide to help you get the project running locally, understand the repo layout, and contribute.
 
 ## Highlights
 
